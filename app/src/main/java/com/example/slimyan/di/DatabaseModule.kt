@@ -4,12 +4,14 @@ import android.content.Context
 import androidx.room.Room
 import com.example.slimyan.data.AppDatabase
 import com.example.slimyan.data.MIGRATION_2_3
+import com.example.slimyan.data.MIGRATION_3_4
 import com.example.slimyan.data.SeedData
 import com.example.slimyan.data.dao.BodyWeightDao
 import com.example.slimyan.data.dao.ExerciseDao
 import com.example.slimyan.data.dao.FoodDao
 import com.example.slimyan.data.dao.MealEntryDao
 import com.example.slimyan.data.dao.MealTemplateDao
+import com.example.slimyan.data.dao.ReminderDao
 import com.example.slimyan.data.dao.SetEntryDao
 import com.example.slimyan.data.dao.UserProfileDao
 import dagger.Module
@@ -28,11 +30,12 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "slimyan.db")
             .addCallback(SeedData.callback)
-            .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
             .fallbackToDestructiveMigration()
             .build()
 
     @Provides fun provideMealTemplateDao(db: AppDatabase): MealTemplateDao = db.mealTemplateDao()
+    @Provides fun provideReminderDao(db: AppDatabase): ReminderDao = db.reminderDao()
 
     @Provides fun provideUserProfileDao(db: AppDatabase): UserProfileDao = db.userProfileDao()
     @Provides fun provideBodyWeightDao(db: AppDatabase): BodyWeightDao = db.bodyWeightDao()

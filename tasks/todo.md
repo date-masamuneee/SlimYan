@@ -73,7 +73,7 @@
 
 ## Phase 4 — リマインド（食事＋筋トレ / CP-D ゲート）
 
-### [ ] T6. リマインド基盤（WorkManager ＋ 権限）
+### [x] T6. リマインド基盤（WorkManager ＋ 権限）
 - **deps**: なし
 - **acceptance**:
   - `Reminder` entity（type meal/workout, mealSlot?, label, hour, minute, daysOfWeekMask, enabled）
