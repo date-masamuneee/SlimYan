@@ -45,3 +45,20 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         )
     }
 }
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `workout_program_item` (
+                `id` INTEGER NOT NULL,
+                `exerciseId` INTEGER NOT NULL,
+                `targetSets` INTEGER NOT NULL,
+                `repCeiling` INTEGER NOT NULL,
+                `sortOrder` INTEGER NOT NULL,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent()
+        )
+    }
+}

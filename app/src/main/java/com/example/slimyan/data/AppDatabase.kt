@@ -10,6 +10,7 @@ import com.example.slimyan.data.dao.MealTemplateDao
 import com.example.slimyan.data.dao.ReminderDao
 import com.example.slimyan.data.dao.SetEntryDao
 import com.example.slimyan.data.dao.UserProfileDao
+import com.example.slimyan.data.dao.WorkoutProgramDao
 import com.example.slimyan.data.entity.BodyWeight
 import com.example.slimyan.data.entity.Exercise
 import com.example.slimyan.data.entity.Food
@@ -18,6 +19,7 @@ import com.example.slimyan.data.entity.MealTemplateItem
 import com.example.slimyan.data.entity.Reminder
 import com.example.slimyan.data.entity.SetEntry
 import com.example.slimyan.data.entity.UserProfile
+import com.example.slimyan.data.entity.WorkoutProgramItem
 
 @Database(
     entities = [
@@ -29,8 +31,9 @@ import com.example.slimyan.data.entity.UserProfile
         SetEntry::class,
         MealTemplateItem::class,
         Reminder::class,
+        WorkoutProgramItem::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -42,4 +45,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun setEntryDao(): SetEntryDao
     abstract fun mealTemplateDao(): MealTemplateDao
     abstract fun reminderDao(): ReminderDao
+    abstract fun workoutProgramDao(): WorkoutProgramDao
 }

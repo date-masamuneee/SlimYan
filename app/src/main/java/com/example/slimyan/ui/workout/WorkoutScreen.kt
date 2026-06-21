@@ -57,6 +57,11 @@ fun WorkoutScreen(vm: WorkoutViewModel = hiltViewModel()) {
         ) {
             Spacer(Modifier.height(4.dp))
 
+            // 固定プログラム＋ダブルプログレッション
+            WorkoutProgramSection()
+
+            HorizontalDivider()
+
             // 種目選択
             ExerciseSelector(
                 exercises = state.exercises,

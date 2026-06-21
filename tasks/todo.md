@@ -98,7 +98,7 @@
 
 ## Phase 5 — 筋トレ固定プログラム＋進捗（CP-E ゲート）
 
-### [ ] T8. 固定プログラム＋ダブルプログレッション
+### [x] T8. 固定プログラム＋ダブルプログレッション
 - **deps**: なし（既存 Exercise/SetEntry の上）
 - **acceptance**:
   - `WorkoutProgramItem` entity（exerciseId, targetSets, repCeiling, sortOrder）＋ DAO/Repo
