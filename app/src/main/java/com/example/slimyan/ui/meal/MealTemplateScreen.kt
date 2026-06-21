@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ private val DAY_LABELS = listOf("月", "火", "水", "木", "金", "土", "日")
 @Composable
 fun TemplateEditor(vm: MealTemplateViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val expandEvent by vm.expandEvent.collectAsStateWithLifecycle()
     var addSlot by remember { mutableStateOf<String?>(null) }
 
     if (addSlot != null) {
@@ -36,12 +38,53 @@ fun TemplateEditor(vm: MealTemplateViewModel = hiltViewModel()) {
         )
     }
 
+    // 展開確認ダイアログ
+    if (expandEvent is ExpandEvent.NeedConfirm) {
+        AlertDialog(
+            onDismissRequest = { vm.clearExpandEvent() },
+            title = { Text("すでに今日の記録があります") },
+            text = { Text("今日の記録に、テンプレの品目を追加で展開しますか？") },
+            confirmButton = {
+                TextButton(onClick = { vm.clearExpandEvent(); vm.confirmExpandToday() }) { Text("追加で展開") }
+            },
+            dismissButton = { TextButton(onClick = { vm.clearExpandEvent() }) { Text("キャンセル") } }
+        )
+    }
+    // 完了/空テンプレの一時メッセージ
+    val expandMessage = when (val e = expandEvent) {
+        is ExpandEvent.Done -> "${e.count}品目を今日の記録に展開した"
+        ExpandEvent.EmptyTemplate -> "今日の曜日のテンプレが空だよ"
+        else -> null
+    }
+    LaunchedEffect(expandEvent) {
+        if (expandEvent is ExpandEvent.Done || expandEvent is ExpandEvent.EmptyTemplate) {
+            kotlinx.coroutines.delay(2500)
+            vm.clearExpandEvent()
+        }
+    }
+
+    val todayLabel = DAY_LABELS[java.time.LocalDate.now().dayOfWeek.value - 1]
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        // 当日展開ボタン
+        Button(
+            onClick = { vm.requestExpandToday() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Filled.Today, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("今日（$todayLabel）の分を記録に展開")
+        }
+        if (expandMessage != null) {
+            Text(expandMessage, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary)
+        }
+
         // 曜日セレクタ
         Row(
             Modifier.fillMaxWidth(),

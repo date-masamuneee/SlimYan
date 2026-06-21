@@ -27,7 +27,7 @@
 - **test**: JVM `TemplateSummaryTest`
 - **verify**: ビルド＋手動（月曜3品で合計確認）
 
-### [ ] T3. 当日展開（テンプレ → 記録）
+### [x] T3. 当日展開（テンプレ → 記録）
 - **deps**: T1, T2
 - **acceptance**:
   - 「今日の分を展開」で今日の曜日 items を当日 MealEntry へ一括 insert（スナップショット）
