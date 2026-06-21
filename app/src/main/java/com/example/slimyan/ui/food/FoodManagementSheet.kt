@@ -157,11 +157,9 @@ private fun FoodEditDialog(
     var grams by remember(initial) { mutableStateOf(initial?.defaultGrams?.toString() ?: "100") }
     var fav by remember(initial) { mutableStateOf(initial?.isFavorite ?: false) }
 
+    // PFC は任意。空欄は 0 として扱う
     val isValid = name.isNotBlank()
         && kcal.toFloatOrNull() != null
-        && protein.toFloatOrNull() != null
-        && fat.toFloatOrNull() != null
-        && carb.toFloatOrNull() != null
         && grams.toFloatOrNull() != null
 
     AlertDialog(
@@ -175,12 +173,17 @@ private fun FoodEditDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 DecimalField("カロリー (kcal/100g) *", kcal) { kcal = it }
+                Text(
+                    "PFC は省略可（空欄 = 0g として保存）",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     DecimalField("P (g)", protein, Modifier.weight(1f)) { protein = it }
                     DecimalField("F (g)", fat, Modifier.weight(1f)) { fat = it }
                     DecimalField("C (g)", carb, Modifier.weight(1f)) { carb = it }
                 }
-                DecimalField("デフォルト量 (g)", grams) { grams = it }
+                DecimalField("デフォルト量 (g) *", grams) { grams = it }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = fav, onCheckedChange = { fav = it })
                     Text("お気に入り", style = MaterialTheme.typography.bodyMedium)
@@ -192,8 +195,12 @@ private fun FoodEditDialog(
                 onClick = {
                     onConfirm(
                         name,
-                        kcal.toFloat(), protein.toFloat(), fat.toFloat(), carb.toFloat(),
-                        grams.toFloat(), fav,
+                        kcal.toFloat(),
+                        protein.toFloatOrNull() ?: 0f,
+                        fat.toFloatOrNull() ?: 0f,
+                        carb.toFloatOrNull() ?: 0f,
+                        grams.toFloat(),
+                        fav,
                     )
                 },
                 enabled = isValid
