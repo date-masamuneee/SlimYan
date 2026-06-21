@@ -84,7 +84,7 @@
 - **test**: JVM `ReminderTimingTest`
 - **verify**: ビルド＋手動（直近時刻で発火）
 
-### [ ] T7. リマインド設定UI
+### [x] T7. リマインド設定UI
 - **deps**: T6
 - **acceptance**:
   - 設定タブにリマインド一覧＋追加/編集（type, mealSlot, 時刻, 曜日トグル, ON/OFF）

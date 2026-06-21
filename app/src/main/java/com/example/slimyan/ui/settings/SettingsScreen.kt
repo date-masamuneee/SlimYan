@@ -145,6 +145,10 @@ fun SettingsScreen(vm: SettingsViewModel = hiltViewModel()) {
                 Text(if (state.isSaved) "保存済み ✓" else "保存")
             }
 
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            ReminderSection()
+
             Spacer(Modifier.height(24.dp))
         }
     }
