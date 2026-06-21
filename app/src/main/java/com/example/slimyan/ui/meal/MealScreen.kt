@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
@@ -21,11 +22,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.slimyan.data.entity.Food
 import com.example.slimyan.data.entity.MealEntry
+import com.example.slimyan.ui.food.FoodManagementSheet
+import com.example.slimyan.ui.food.FoodViewModel
 
 @Composable
-fun MealScreen(vm: MealViewModel = hiltViewModel()) {
+fun MealScreen(
+    vm: MealViewModel = hiltViewModel(),
+    foodVm: FoodViewModel = hiltViewModel(),
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     var addTargetSlot by remember { mutableStateOf<String?>(null) }
+    var showFoodSheet by remember { mutableStateOf(false) }
+
+    if (showFoodSheet) {
+        FoodManagementSheet(vm = foodVm, onDismiss = { showFoodSheet = false })
+    }
 
     if (addTargetSlot != null) {
         FoodPickerDialog(
@@ -39,7 +50,16 @@ fun MealScreen(vm: MealViewModel = hiltViewModel()) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("食事プラン・記録") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("食事プラン・記録") },
+                actions = {
+                    IconButton(onClick = { showFoodSheet = true }) {
+                        Icon(Icons.Filled.Restaurant, "マイ食品管理")
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
