@@ -114,7 +114,7 @@
 
 ## Phase 6 — 仕上げ
 
-### [ ] T9. テスト拡充・整理
+### [x] T9. テスト拡充・整理
 - **deps**: T1〜T8
 - **acceptance**: `Example*Test` 整理／`TdeeCalculator` JVMテスト追加／純粋ロジックのテスト棚卸し／`./gradlew test` 全グリーン
 - **verify**: `./gradlew test` ＋ `assembleDebug`
