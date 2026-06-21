@@ -3,11 +3,13 @@ package com.example.slimyan.di
 import android.content.Context
 import androidx.room.Room
 import com.example.slimyan.data.AppDatabase
+import com.example.slimyan.data.MIGRATION_2_3
 import com.example.slimyan.data.SeedData
 import com.example.slimyan.data.dao.BodyWeightDao
 import com.example.slimyan.data.dao.ExerciseDao
 import com.example.slimyan.data.dao.FoodDao
 import com.example.slimyan.data.dao.MealEntryDao
+import com.example.slimyan.data.dao.MealTemplateDao
 import com.example.slimyan.data.dao.SetEntryDao
 import com.example.slimyan.data.dao.UserProfileDao
 import dagger.Module
@@ -26,8 +28,11 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "slimyan.db")
             .addCallback(SeedData.callback)
+            .addMigrations(MIGRATION_2_3)
             .fallbackToDestructiveMigration()
             .build()
+
+    @Provides fun provideMealTemplateDao(db: AppDatabase): MealTemplateDao = db.mealTemplateDao()
 
     @Provides fun provideUserProfileDao(db: AppDatabase): UserProfileDao = db.userProfileDao()
     @Provides fun provideBodyWeightDao(db: AppDatabase): BodyWeightDao = db.bodyWeightDao()

@@ -7,7 +7,7 @@
 
 ## Phase 1 — 週間メニューテンプレ（★核 / CP-A ゲート）
 
-### [ ] T1. テンプレ データ基盤 ＋ 加算マイグレーション切替
+### [x] T1. テンプレ データ基盤 ＋ 加算マイグレーション切替
 - **deps**: なし（MVP基盤の上）
 - **acceptance**:
   - `MealTemplateItem` entity（dayOfWeek 1-7, mealSlot, foodId, grams, sortOrder）
