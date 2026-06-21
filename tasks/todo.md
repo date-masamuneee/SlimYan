@@ -57,7 +57,7 @@
 
 ## Phase 3 — AI監査（CP-C ゲート / 課金）
 
-### [ ] T5. AI食事プラン監査（Claude API）
+### [x] T5. AI食事プラン監査（Claude API）
 - **deps**: T1（テンプレ存在）
 - **acceptance**:
   - `AiRepository.auditMealPlan(template, profile)`

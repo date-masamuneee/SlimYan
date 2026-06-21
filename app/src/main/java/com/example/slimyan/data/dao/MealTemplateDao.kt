@@ -27,4 +27,10 @@ interface MealTemplateDao {
 
     @Delete
     suspend fun delete(item: MealTemplateItem)
+
+    @Query("DELETE FROM meal_template_item")
+    suspend fun deleteAll()
+
+    @Insert
+    suspend fun insertAll(items: List<MealTemplateItem>)
 }

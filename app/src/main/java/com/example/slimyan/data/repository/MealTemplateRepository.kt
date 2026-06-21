@@ -21,4 +21,10 @@ class MealTemplateRepository @Inject constructor(
     suspend fun update(item: MealTemplateItem) = dao.update(item)
 
     suspend fun delete(item: MealTemplateItem) = dao.delete(item)
+
+    /** テンプレ全体を置き換える（AI監査の修正案適用）。 */
+    suspend fun replaceAll(items: List<MealTemplateItem>) {
+        dao.deleteAll()
+        dao.insertAll(items)
+    }
 }

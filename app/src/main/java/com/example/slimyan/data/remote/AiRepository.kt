@@ -50,6 +50,21 @@ data class NutritionEstimate(
     @SerialName("serving_grams") val servingGrams: Float,
 )
 
+@Serializable
+data class RevisedTemplateItem(
+    @SerialName("day_of_week") val dayOfWeek: Int,
+    @SerialName("meal_slot") val mealSlot: String,
+    @SerialName("food_id") val foodId: Long,
+    val grams: Float,
+)
+
+@Serializable
+data class MealPlanAudit(
+    val diagnosis: String,
+    val issues: List<String> = emptyList(),
+    val revised: List<RevisedTemplateItem> = emptyList(),
+)
+
 // ---- Repository ----
 
 private const val MODEL = "claude-haiku-4-5-20251001"
@@ -106,6 +121,15 @@ class AiRepository @Inject constructor(
             maxTokens = 160,
         )
         lenientJson.decodeFromString<NutritionEstimate>(raw)
+    }
+
+    suspend fun auditMealPlan(userMessage: String): Result<MealPlanAudit> = runCatching {
+        val raw = callClaude(
+            system = "あなたは減量に特化した食事プラン監査AIです。医療アドバイスではなく一般的な提案として、指定された foodId のみを使った修正案を JSON のみで返します。",
+            userMessage = userMessage,
+            maxTokens = 2048,
+        )
+        lenientJson.decodeFromString<MealPlanAudit>(raw)
     }
 
     private suspend fun callClaude(system: String, userMessage: String, maxTokens: Int): String {

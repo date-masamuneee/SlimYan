@@ -6,6 +6,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Today
@@ -29,6 +30,7 @@ fun TemplateEditor(vm: MealTemplateViewModel = hiltViewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val expandEvent by vm.expandEvent.collectAsStateWithLifecycle()
     var addSlot by remember { mutableStateOf<String?>(null) }
+    var showAudit by remember { mutableStateOf(false) }
 
     if (addSlot != null) {
         TemplateAddDialog(
@@ -36,6 +38,10 @@ fun TemplateEditor(vm: MealTemplateViewModel = hiltViewModel()) {
             onAdd = { food, grams -> vm.addItem(addSlot!!, food.id, grams) },
             onDismiss = { addSlot = null }
         )
+    }
+
+    if (showAudit) {
+        AuditSheet(onDismiss = { showAudit = false })
     }
 
     // 展開確認ダイアログ
@@ -83,6 +89,16 @@ fun TemplateEditor(vm: MealTemplateViewModel = hiltViewModel()) {
         if (expandMessage != null) {
             Text(expandMessage, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary)
+        }
+
+        // AI監査ボタン
+        OutlinedButton(
+            onClick = { showAudit = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Filled.AutoAwesome, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("AIに週間テンプレを診断してもらう")
         }
 
         // 曜日セレクタ
