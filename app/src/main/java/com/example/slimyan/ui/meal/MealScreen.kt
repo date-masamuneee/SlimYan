@@ -93,13 +93,14 @@ fun MealScreen(
                     onDelete = { vm.delete(it) }
                 )
                 MealSubTab.Template -> TemplateEditor()
+                MealSubTab.Shopping -> ShoppingListContent()
             }
         }
     }
 }
 
 private enum class MealSubTab(val label: String) {
-    Record("記録"), Template("週間テンプレ")
+    Record("記録"), Template("週間テンプレ"), Shopping("買い物")
 }
 
 @Composable
