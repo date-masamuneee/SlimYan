@@ -64,7 +64,7 @@ class MealViewModel @Inject constructor(
     fun setQuery(q: String) { _query.value = q }
 
     fun addEntry(food: Food, slot: String, grams: Float) {
-        val calories = food.caloriesPer100g * grams / 100f
+        val calories = food.calories * grams / food.servingGrams
         viewModelScope.launch {
             mealRepo.add(
                 MealEntry(

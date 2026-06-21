@@ -7,10 +7,11 @@ import androidx.room.PrimaryKey
 data class Food(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val caloriesPer100g: Float,
-    val proteinPer100g: Float,
-    val fatPer100g: Float,
-    val carbPer100g: Float,
-    val defaultGrams: Float = 100f,
+    // すべて一食分（servingGrams 相当量）あたりの値
+    val calories: Float,
+    val protein: Float,
+    val fat: Float,
+    val carb: Float,
+    val servingGrams: Float = 100f,
     val isFavorite: Boolean = false,
 )

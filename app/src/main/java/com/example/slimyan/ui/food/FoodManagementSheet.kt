@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.slimyan.data.entity.Food
+import com.example.slimyan.data.remote.NutritionEstimate
 
 @Composable
 fun FoodManagementSheet(
@@ -27,26 +28,34 @@ fun FoodManagementSheet(
     onDismiss: () -> Unit,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val estimateState by vm.estimate.collectAsStateWithLifecycle()
     var editTarget by remember { mutableStateOf<Food?>(null) }
     var showAddForm by remember { mutableStateOf(false) }
 
     if (showAddForm || editTarget != null) {
         FoodEditDialog(
             initial = editTarget,
+            estimateState = estimateState,
+            onEstimateRequest = { vm.requestEstimate(it) },
             onConfirm = { name, kcal, p, f, c, g, fav ->
                 if (editTarget != null) {
                     vm.update(editTarget!!.copy(
-                        name = name, caloriesPer100g = kcal,
-                        proteinPer100g = p, fatPer100g = f,
-                        carbPer100g = c, defaultGrams = g, isFavorite = fav,
+                        name = name, calories = kcal,
+                        protein = p, fat = f,
+                        carb = c, servingGrams = g, isFavorite = fav,
                     ))
                 } else {
                     vm.add(name, kcal, p, f, c, g, fav)
                 }
                 editTarget = null
                 showAddForm = false
+                vm.clearEstimate()
             },
-            onDismiss = { editTarget = null; showAddForm = false }
+            onDismiss = {
+                editTarget = null
+                showAddForm = false
+                vm.clearEstimate()
+            }
         )
     }
 
@@ -127,7 +136,7 @@ private fun FoodRow(
             Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
                 Text(food.name, style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "${food.caloriesPer100g.toInt()} kcal · P${food.proteinPer100g}g F${food.fatPer100g}g C${food.carbPer100g}g / 100g",
+                    "${food.calories.toInt()} kcal · P${food.protein}g F${food.fat}g C${food.carb}g / 1食(${food.servingGrams.toInt()}g)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -146,35 +155,74 @@ private fun FoodRow(
 @Composable
 private fun FoodEditDialog(
     initial: Food?,
+    estimateState: EstimateState,
+    onEstimateRequest: (String) -> Unit,
     onConfirm: (String, Float, Float, Float, Float, Float, Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
-    var kcal by remember(initial) { mutableStateOf(initial?.caloriesPer100g?.toString() ?: "") }
-    var protein by remember(initial) { mutableStateOf(initial?.proteinPer100g?.toString() ?: "") }
-    var fat by remember(initial) { mutableStateOf(initial?.fatPer100g?.toString() ?: "") }
-    var carb by remember(initial) { mutableStateOf(initial?.carbPer100g?.toString() ?: "") }
-    var grams by remember(initial) { mutableStateOf(initial?.defaultGrams?.toString() ?: "100") }
+    var kcal by remember(initial) { mutableStateOf(initial?.calories?.toString() ?: "") }
+    var protein by remember(initial) { mutableStateOf(initial?.protein?.toString() ?: "") }
+    var fat by remember(initial) { mutableStateOf(initial?.fat?.toString() ?: "") }
+    var carb by remember(initial) { mutableStateOf(initial?.carb?.toString() ?: "") }
+    var grams by remember(initial) { mutableStateOf(initial?.servingGrams?.toString() ?: "100") }
     var fav by remember(initial) { mutableStateOf(initial?.isFavorite ?: false) }
 
-    // PFC は任意。空欄は 0 として扱う
+    // 推定結果が来たら自動入力
+    LaunchedEffect(estimateState) {
+        if (estimateState is EstimateState.Done) {
+            val e = estimateState.estimate
+            kcal = e.calories.toInt().toString()
+            protein = "%.1f".format(e.protein)
+            fat = "%.1f".format(e.fat)
+            carb = "%.1f".format(e.carb)
+            grams = e.servingGrams.toInt().toString()
+        }
+    }
+
     val isValid = name.isNotBlank()
         && kcal.toFloatOrNull() != null
         && grams.toFloatOrNull() != null
+    val isEstimating = estimateState is EstimateState.Loading
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (initial == null) "食品を追加" else "食品を編集") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = name, onValueChange = { name = it },
-                    label = { Text("食品名 *") }, singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                DecimalField("カロリー (kcal/100g) *", kcal) { kcal = it }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = name, onValueChange = { name = it },
+                        label = { Text("食品名 *") }, singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilledTonalButton(
+                        onClick = { onEstimateRequest(name) },
+                        enabled = name.isNotBlank() && !isEstimating,
+                        contentPadding = PaddingValues(horizontal = 10.dp),
+                        modifier = Modifier.height(56.dp)
+                    ) {
+                        if (isEstimating) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("AI推定", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+                if (estimateState is EstimateState.Error) {
+                    Text(
+                        "推定失敗: ${estimateState.msg}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                DecimalField("カロリー (kcal/1食) *", kcal) { kcal = it }
                 Text(
-                    "PFC は省略可（空欄 = 0g として保存）",
+                    "値はすべて一食分。PFC は省略可（空欄 = 0g として保存）",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
@@ -183,7 +231,7 @@ private fun FoodEditDialog(
                     DecimalField("F (g)", fat, Modifier.weight(1f)) { fat = it }
                     DecimalField("C (g)", carb, Modifier.weight(1f)) { carb = it }
                 }
-                DecimalField("デフォルト量 (g) *", grams) { grams = it }
+                DecimalField("一食の量 (g) *", grams) { grams = it }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = fav, onCheckedChange = { fav = it })
                     Text("お気に入り", style = MaterialTheme.typography.bodyMedium)

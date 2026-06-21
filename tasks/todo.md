@@ -1,136 +1,120 @@
-# タスクリスト — Slim-yan
+# タスクリスト — 週間テンプレ中心の新機能群（v2）
 
 記法: `[ ]` 未着手 / `[~]` 進行中 / `[x]` 完了
+※ MVP（旧 T0〜T8 リカバリ）は実装済み。本リストは新機能群。
 
 ---
 
-## P0 — プロジェクト雛形（CP-A ゲート）
+## Phase 1 — 週間メニューテンプレ（★核 / CP-A ゲート）
 
-### [ ] T0. Gradle・DI・NavHost 雛形
+### [ ] T1. テンプレ データ基盤 ＋ 加算マイグレーション切替
+- **deps**: なし（MVP基盤の上）
+- **acceptance**:
+  - `MealTemplateItem` entity（dayOfWeek 1-7, mealSlot, foodId, grams, sortOrder）
+  - `MealTemplateDao` / `MealTemplateRepository` / Hilt provider
+  - DB version 2→3、`Migration(2,3)` で CREATE TABLE、`addMigrations` 適用、既存データ保護
+  - 純粋ヘルパ `NutritionMath`（food+grams → kcal/P/F/C）
+- **test**: JVM `NutritionMathTest`
+- **verify**: `./gradlew test` ＋ `assembleDebug` ＋ 既存プロフィール残存
+
+### [ ] T2. テンプレ編集UI（食事タブのサブ画面化）
+- **deps**: T1
+- **acceptance**:
+  - 食事タブ内サブ画面 toggle（記録／週間テンプレ）、ボトムナビ5タブ維持
+  - 曜日×slot で品目 追加（マイ食品＋grams）/削除/並べ替え
+  - 曜日別・週合計 kcal/PFC＋目標差分
+  - `MealTemplateViewModel`、集計は `TemplateSummary.calc`
+- **test**: JVM `TemplateSummaryTest`
+- **verify**: ビルド＋手動（月曜3品で合計確認）
+
+### [ ] T3. 当日展開（テンプレ → 記録）
+- **deps**: T1, T2
+- **acceptance**:
+  - 「今日の分を展開」で今日の曜日 items を当日 MealEntry へ一括 insert（スナップショット）
+  - 二重展開ガード
+  - 展開マッピングは `TemplateExpander.expand`
+- **test**: JVM `TemplateExpanderTest`
+- **verify**: ビルド＋手動（展開→記録→チェック→ダッシュボード反映）
+
+> ✅ **CP-A**: 核ループ（テンプレ→展開→記録→チェック→ダッシュボード）を手動確認して停止。
+
+---
+
+## Phase 2 — 買い物リスト（CP-B ゲート）
+
+### [ ] T4. 買い物リスト（テンプレ集計）
+- **deps**: T1
+- **acceptance**:
+  - 全曜日集計で食材別の必要個数（Σgrams/servingGrams）・総グラム
+  - 食事タブのサブ画面 or ボトムシート表示、N週倍率（MVP×1）
+  - `ShoppingListCalculator.calc`
+- **test**: JVM `ShoppingListCalculatorTest`
+- **verify**: ビルド＋手動
+
+> ✅ **CP-B**: テンプレ→買い物リスト算出の整合を確認。
+
+---
+
+## Phase 3 — AI監査（CP-C ゲート / 課金）
+
+### [ ] T5. AI食事プラン監査（Claude API）
+- **deps**: T1（テンプレ存在）
+- **acceptance**:
+  - `AiRepository.auditMealPlan(template, profile)`
+  - ペイロード生成 `AuditRequestBuilder.build`
+  - 診断サマリ＋修正提案を返す、プレビュー（前後比較）＋チャット微調整→再診断
+  - 確認で `MealTemplateItem` に差分反映、キャンセルで不変
+- **test**: JVM `AuditRequestBuilderTest` ＋ レスポンスパース
+- **verify**: ビルド＋手動（実APIキー）
+
+> ✅ **CP-C（要確認・課金）**: 実API＝コスト発生。実行前に兄弟確認。自動反映しない。
+
+---
+
+## Phase 4 — リマインド（食事＋筋トレ / CP-D ゲート）
+
+### [ ] T6. リマインド基盤（WorkManager ＋ 権限）
 - **deps**: なし
 - **acceptance**:
-  - Gradle sync 成功（Kotlin 1.9.25 / KSP / Hilt / Room / Ktor / Compose BOM 2024.06）
-  - `KintoreLogApplication`（@HiltAndroidApp）
-  - `MainActivity` に NavHost、ボトムナビ5タブ（ホーム/食事/筋トレ/体重/設定）
-  - 各タブにプレースホルダー画面（Text だけでOK）
-- **verify**: `assembleDebug` 成功 → 実機起動 → 5タブを行き来できる
-- ✅ **CP-A: ここで停止・ビルド結果を確認してから P1 へ**
+  - `Reminder` entity（type meal/workout, mealSlot?, label, hour, minute, daysOfWeekMask, enabled）
+  - DAO / Repository / Hilt、DB 3→4 ＋ `Migration(3,4)`
+  - WorkManager 依存追加、通知チャンネル、`ReminderScheduler`
+  - `POST_NOTIFICATIONS` 実行時要求（拒否でも他機能動作）
+  - 純粋 `ReminderTiming`（曜日マスク・次回時刻）
+- **test**: JVM `ReminderTimingTest`
+- **verify**: ビルド＋手動（直近時刻で発火）
+
+### [ ] T7. リマインド設定UI
+- **deps**: T6
+- **acceptance**:
+  - 設定タブにリマインド一覧＋追加/編集（type, mealSlot, 時刻, 曜日トグル, ON/OFF）
+  - 保存で再スケジュール、曜日トグル↔マスク `DayMask`
+- **test**: JVM `DayMaskTest`
+- **verify**: ビルド＋手動
+
+> ✅ **CP-D（外部作用・権限）**: 権限フロー・発火を実機確認。
 
 ---
 
-## P1 — コア5パスを実機検証（CP-B ゲート）
+## Phase 5 — 筋トレ固定プログラム＋進捗（CP-E ゲート）
 
-### [ ] T1. データ層（Entity / DAO / DB / Repository）
-- **deps**: T0
+### [ ] T8. 固定プログラム＋ダブルプログレッション
+- **deps**: なし（既存 Exercise/SetEntry の上）
 - **acceptance**:
-  - Entity 6種: `UserProfile`, `BodyWeight`, `Food`, `MealEntry`, `Exercise`, `SetEntry`
-  - DAO: `UserProfileDao`, `BodyWeightDao`, `FoodDao`, `MealEntryDao`, `ExerciseDao`, `SetEntryDao`
-  - `AppDatabase`（Room, version=1）
-  - `DatabaseModule`（Hilt）
-  - Repository 4種: `ProfileRepository`, `BodyWeightRepository`, `FoodRepository`, `MealRepository`, `WorkoutRepository`
-  - 主要種目プリセット（Exercise シードデータ）
-  - 主要食品プリセット（Food シードデータ、ご飯・パン・卵など10件程度）
-- **verify**: `assembleDebug` 成功（コンパイルエラーなし）
+  - `WorkoutProgramItem` entity（exerciseId, targetSets, repCeiling, sortOrder）＋ DAO/Repo
+  - DB 4→5 ＋ `Migration(4,5)`
+  - 「今日のプログラム」表示、前回全セット repCeiling 到達で「重量UP」バッジ
+  - 進捗判定 `ProgressionAdvisor.shouldIncreaseWeight`
+- **test**: JVM `ProgressionAdvisorTest`（境界値）
+- **verify**: ビルド＋手動
 
-### [ ] T2. 設定画面（UserProfile + TDEE計算）
-- **deps**: T1
-- **acceptance**:
-  - 身長・体重・年齢・性別・活動量を入力して保存できる
-  - TDEE が Harris-Benedict 式で自動計算されて表示される
-  - 目標体重・達成期日を入力 → 1日の摂取カロリー目標が自動算出される
-  - 目標PFC（g）を手動入力できる
-  - 再起動後も保存されている
-- **verify**: 各値を入力→保存→アプリ再起動→値が残っている
-
-### [ ] T3. 体重記録画面
-- **deps**: T1
-- **acceptance**:
-  - 今日の体重を入力・保存できる
-  - 折れ線グラフで過去の推移が表示される（週・月切替）
-  - 目標体重と現在体重の差が表示される
-- **verify**: 数日分の体重を入力 → グラフに折れ線が描画される
-
-### [ ] T4. 食品マスタ管理
-- **deps**: T1
-- **acceptance**:
-  - 食品の追加（名前・カロリー/100g・PFC・デフォルトグラム）
-  - 一覧表示（お気に入り優先）
-  - 編集・削除
-  - プリセット食品が最初から入っている
-- **verify**: 食品追加 → 一覧に表示 → 削除 → 消える
-
-### [ ] T5. 食事プラン・記録画面
-- **deps**: T1, T4
-- **acceptance**:
-  - 朝・昼・夜・間食の枠に食品を追加できる（マイ食品から選択）
-  - グラム数を変更できる
-  - 「食べた」チェックを押すと実績に変わる
-  - カロリー残量（目標 − 摂取）がリアルタイム表示される
-  - PFC の摂取量も表示される
-- **verify**: 朝食に食品追加→チェック→カロリーが減る→昼食追加→合算される
-
-### [ ] T6. 筋トレ記録画面
-- **deps**: T1
-- **acceptance**:
-  - 種目を選択して重量・レップを入力 → セット追加
-  - 当日のセット一覧が種目別に表示される
-  - 種目選択時に前回値が初期表示される
-  - 種目の追加・編集・削除ができる
-- **verify**: 種目選択→セット追加→一覧反映→再起動後も残る
-
-- ✅ **CP-B: T2〜T6 が実機で全部動いたら停止・フィードバックを取る**
+> ✅ **CP-E**: プログラム＋進捗提案を手動確認。
 
 ---
 
-## P2 — ダッシュボード統合（CP-C ゲート）
+## Phase 6 — 仕上げ
 
-### [ ] T7. ホームダッシュボード
-- **deps**: T2, T3, T5, T6
-- **acceptance**:
-  - 今日のカロリー摂取状況（残量バー・数値）
-  - 体重の直近トレンド（直近7日の折れ線 or 前日比）
-  - 今日の食事プランサマリ（朝昼夜間食のチェック状況）
-  - 今日の筋トレ実施有無
-- **verify**: 各画面で記録 → ホームに戻ると全て反映されている
-
-- ✅ **CP-C: ダッシュボードが正しく統合されていることを確認してから P3 へ**
-
----
-
-## P3 — Claude API 連携（CP-D ゲート）
-
-### [ ] T8. AiRepository + リカバリ提案画面
-- **deps**: T7
-- **acceptance**:
-  - `local.properties` の `claude.api.key` を読み込む
-  - ホーム画面の「リカバリ提案を出す」ボタン押下でAPI呼び出し
-  - 今日の目標カロリー・実績・残り枠・PFCをプロンプトに含める
-  - 当日の残り食事案カード・翌日プラン修正カードが表示される
-  - API エラー時はエラーカードを表示（クラッシュしない）
-- **verify**: プランを崩した状態でボタン押下 → 提案カードが表示される
-
-- ✅ **CP-D: リカバリ提案が実機で動作することを確認してから P4 へ**
-
----
-
-## P4 — テストと品質（CP-E ゲート）
-
-### [ ] T9. JVM ユニットテスト
-- **deps**: T1, T2
-- **acceptance**: `./gradlew test` がパス
-  - TDEE 計算（Harris-Benedict 式の各パターン）
-  - カロリー集計ロジック
-  - リカバリ提案のリクエスト生成ロジック
-
-### [ ] T10. instrumented DAO テスト
-- **deps**: T1（実機 or エミュ必要）
-- **acceptance**: `./gradlew connectedAndroidTest` がパス
-  - MealEntry の日別集計
-  - BodyWeight の期間絞り込み
-  - Exercise CASCADE 削除
-
-### [ ] T11. コードレビュー対応
-- **deps**: CP-D 到達後
-- **acceptance**: `/code-review` の妥当な指摘を反映
-
-- ✅ **CP-E: test 緑 ＆ レビュー対応済み → MVP 完成**
+### [ ] T9. テスト拡充・整理
+- **deps**: T1〜T8
+- **acceptance**: `Example*Test` 整理／`TdeeCalculator` JVMテスト追加／純粋ロジックのテスト棚卸し／`./gradlew test` 全グリーン
+- **verify**: `./gradlew test` ＋ `assembleDebug`

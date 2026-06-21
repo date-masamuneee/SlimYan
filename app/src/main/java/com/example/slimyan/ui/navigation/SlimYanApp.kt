@@ -42,6 +42,14 @@ fun SlimYanApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDest = backStackEntry?.destination
 
+    fun navigateTab(route: String) {
+        navController.navigate(route) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -49,15 +57,7 @@ fun SlimYanApp() {
                     val selected = currentDest?.hierarchy?.any { it.route == dest.route } == true
                     NavigationBarItem(
                         selected = selected,
-                        onClick = {
-                            navController.navigate(dest.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
+                        onClick = { navigateTab(dest.route) },
                         icon = { Icon(dest.icon, contentDescription = dest.label) },
                         label = { Text(dest.label) }
                     )
@@ -70,7 +70,9 @@ fun SlimYanApp() {
             startDestination = Dest.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Dest.Home.route) { HomeScreen() }
+            composable(Dest.Home.route) {
+                HomeScreen(onNavigateToSettings = { navigateTab(Dest.Settings.route) })
+            }
             composable(Dest.Meal.route) { MealScreen() }
             composable(Dest.Workout.route) { WorkoutScreen() }
             composable(Dest.Weight.route) { WeightScreen() }

@@ -183,7 +183,7 @@ private fun FoodPickerDialog(
 ) {
     var selectedFood by remember { mutableStateOf<Food?>(null) }
     var grams by remember(selectedFood) {
-        mutableStateOf(selectedFood?.defaultGrams?.toString() ?: "100")
+        mutableStateOf(selectedFood?.servingGrams?.toString() ?: "100")
     }
 
     AlertDialog(
@@ -212,12 +212,12 @@ private fun FoodPickerDialog(
                         ) {
                             RadioButton(
                                 selected = isSelected,
-                                onClick = { selectedFood = food; grams = food.defaultGrams.toString() }
+                                onClick = { selectedFood = food; grams = food.servingGrams.toString() }
                             )
                             Column(Modifier.weight(1f)) {
                                 Text(food.name, style = MaterialTheme.typography.bodyMedium)
                                 Text(
-                                    "${food.caloriesPer100g.toInt()} kcal/100g",
+                                    "${food.calories.toInt()} kcal / 1食(${food.servingGrams.toInt()}g)",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.outline
                                 )
@@ -230,7 +230,7 @@ private fun FoodPickerDialog(
                     }
                 }
                 if (selectedFood != null) {
-                    val kcal = ((selectedFood!!.caloriesPer100g * (grams.toFloatOrNull() ?: 0f)) / 100f).toInt()
+                    val kcal = (selectedFood!!.calories * (grams.toFloatOrNull() ?: 0f) / selectedFood!!.servingGrams).toInt()
                     OutlinedTextField(
                         value = grams,
                         onValueChange = { grams = it },

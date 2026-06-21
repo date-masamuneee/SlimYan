@@ -24,7 +24,7 @@ import com.example.slimyan.data.entity.UserProfile
         Exercise::class,
         SetEntry::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

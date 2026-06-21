@@ -26,6 +26,7 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "slimyan.db")
             .addCallback(SeedData.callback)
+            .fallbackToDestructiveMigration()
             .build()
 
     @Provides fun provideUserProfileDao(db: AppDatabase): UserProfileDao = db.userProfileDao()
