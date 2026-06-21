@@ -17,7 +17,7 @@
 - **test**: JVM `NutritionMathTest`
 - **verify**: `./gradlew test` ＋ `assembleDebug` ＋ 既存プロフィール残存
 
-### [ ] T2. テンプレ編集UI（食事タブのサブ画面化）
+### [x] T2. テンプレ編集UI（食事タブのサブ画面化）
 - **deps**: T1
 - **acceptance**:
   - 食事タブ内サブ画面 toggle（記録／週間テンプレ）、ボトムナビ5タブ維持
