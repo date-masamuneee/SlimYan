@@ -126,6 +126,23 @@ fun SettingsScreen(vm: SettingsViewModel = hiltViewModel()) {
 
             SectionLabel("目標PFC (g/日)")
 
+            // 方針から自動提案（その後の手動編集も可）
+            if (state.calculatedTarget > 0) {
+                Text("方針から提案（目標 ${state.calculatedTarget} kcal・体重 ${state.weightKg}kg ベース）",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PfcPlanner.Policy.entries.forEach { policy ->
+                        AssistChip(
+                            onClick = { vm.applyPfcPolicy(policy) },
+                            label = { Text(policy.label) }
+                        )
+                    }
+                }
+            } else {
+                Text("先に基本情報・目標を入れると、方針からPFCを提案できるよ",
+                    style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+            }
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberField("P", state.proteinTargetG, Modifier.weight(1f)) {
                     vm.update { copy(proteinTargetG = it) }

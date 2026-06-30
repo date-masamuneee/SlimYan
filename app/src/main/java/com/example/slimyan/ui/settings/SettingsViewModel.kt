@@ -2,6 +2,7 @@ package com.example.slimyan.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.slimyan.data.PfcPlanner
 import com.example.slimyan.data.TdeeCalculator
 import com.example.slimyan.data.entity.UserProfile
 import com.example.slimyan.data.repository.ProfileRepository
@@ -52,6 +53,20 @@ class SettingsViewModel @Inject constructor(
 
     fun update(block: SettingsUiState.() -> SettingsUiState) {
         _state.update { it.block().recalculate() }
+    }
+
+    /** 方針に応じて目標PFCを自動算出してフィールドに反映（その後の手動編集も可）。 */
+    fun applyPfcPolicy(policy: PfcPlanner.Policy) {
+        _state.update { s ->
+            val weight = s.weightKg.toFloatOrNull() ?: return@update s
+            if (s.calculatedTarget <= 0) return@update s
+            val pfc = PfcPlanner.suggest(s.calculatedTarget, weight, policy)
+            s.copy(
+                proteinTargetG = pfc.protein.toString(),
+                fatTargetG = pfc.fat.toString(),
+                carbTargetG = pfc.carb.toString(),
+            )
+        }
     }
 
     fun setGoalDate(epochDay: Long) {
